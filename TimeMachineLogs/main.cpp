@@ -107,15 +107,22 @@ void testWithoutCommandLineArgs()
 {
     qDebug() << "TESTING APPLICATION LOGIC";
 
-    FileCollector fileCollector{"<path_to_scan_for_files>"};
-    const auto    &uniqueFiles{fileCollector.getUniqueFiles()};
-    const auto    &duplicateFiles{fileCollector.getDuplicateFileGroups()};
+    try
+    {
+        FileCollector fileCollector{"<path_to_scan_for_files>"};
+        const auto    &uniqueFiles{fileCollector.getUniqueFiles()};
+        const auto    &duplicateFiles{fileCollector.getDuplicateFileGroups()};
 
-    qDebug() << "WRITING ARCHIVE";
-    Archiver::pack("<path_to_output_archive_file>", uniqueFiles, duplicateFiles);
+        qDebug() << "WRITING ARCHIVE";
+        Archiver::pack("<path_to_output_archive_file>", uniqueFiles, duplicateFiles);
 
-    qDebug() << "UNPACKING THE ARCHIVE";
-    Archiver::unpack("<path_to_input_archive_file>", "<output_path>");
+        qDebug() << "UNPACKING THE ARCHIVE";
+        Archiver::unpack("<path_to_input_archive_file>", "<output_path>");
+    }
+    catch (std::exception &e)
+    {
+        qCritical() << "An Exception occured while running the program:" << e.what();
+    }
 }
 
 int main(int argc, char *argv[])
@@ -138,25 +145,32 @@ int main(int argc, char *argv[])
     if (!validateMode(args.mode))
         return 1;
 
-    if (args.mode == ArchiverModeHelper::Mode::Pack)
+    try
     {
-        FileCollector fileCollector{args.input};
-        const auto    &uniqueFiles{fileCollector.getUniqueFiles()};
-        const auto    &duplicateFileGroups{fileCollector.getDuplicateFileGroups()};
-
-        if (!Archiver::pack(args.output, uniqueFiles, duplicateFileGroups))
+        if (args.mode == ArchiverModeHelper::Mode::Pack)
         {
-            qCritical() << "Failed to pack the archive:" << args.output;
-            return 1;
+            FileCollector fileCollector{args.input};
+            const auto    &uniqueFiles{fileCollector.getUniqueFiles()};
+            const auto    &duplicateFileGroups{fileCollector.getDuplicateFileGroups()};
+
+            if (!Archiver::pack(args.output, uniqueFiles, duplicateFileGroups))
+            {
+                qCritical() << "Failed to pack the archive:" << args.output;
+                return 1;
+            }
+        }
+        else if (args.mode == ArchiverModeHelper::Mode::Unpack)
+        {
+            if (!Archiver::unpack(args.input, args.output))
+            {
+                qCritical() << "Failed to unpack the archive:" << args.input;
+                return 1;
+            }
         }
     }
-    else if (args.mode == ArchiverModeHelper::Mode::Unpack)
+    catch (std::exception &e)
     {
-        if (!Archiver::unpack(args.input, args.output))
-        {
-            qCritical() << "Failed to unpack the archive:" << args.input;
-            return 1;
-        }
+        qCritical() << "An exception occured while running the program:" << e.what();
     }
 
     return 0;

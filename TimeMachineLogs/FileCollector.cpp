@@ -6,6 +6,11 @@
 FileCollector::FileCollector(const QString &rootPath)
     : m_rootPath{rootPath}
 {
+    QFileInfo info{m_rootPath};\
+
+    if (!info.exists() || !info.isDir())
+        throw std::runtime_error(QString("Invalid directory: %1").arg(m_rootPath).toStdString());
+
     scan();
 }
 
