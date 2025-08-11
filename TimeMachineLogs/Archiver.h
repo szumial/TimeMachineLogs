@@ -40,6 +40,10 @@ private:
                                     QList<FileMeta> &metadataList,
                                     qint64 chunkSize);
 
+    static bool validateArchivePathForPack(const QString &path);
+    static bool validateArchivePathForUnpack(const QString &path);
+    static bool validateOutputDirForUnpack(const QString &dirPath);
+
     static constexpr qint64 s_chunkSize{4 * 1024 * 1024};
 };
 

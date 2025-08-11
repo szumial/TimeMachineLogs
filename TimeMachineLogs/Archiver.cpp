@@ -7,6 +7,10 @@ bool Archiver::pack(const QString &archivePath,
                     const QList<QList<FileEntry> > &duplicateGroups,
                     qint64 chunkSize)
 {
+    // Validate archivePath for packing
+    if (!validateArchivePathForPack(archivePath))
+        return false;
+
     QFile archiveFile{archivePath};
 
     if (!archiveFile.open(QIODevice::WriteOnly))
@@ -49,6 +53,14 @@ bool Archiver::pack(const QString &archivePath,
 
 bool Archiver::unpack(const QString &archivePath, const QString &outputDir, qint64 chunkSize)
 {
+    // Validate archivePath for unpacking
+    if (!validateArchivePathForUnpack(archivePath))
+        return false;
+
+    // Validate outputDir for unpacking
+    if (!validateOutputDirForUnpack(outputDir))
+        return false;
+
     QFile archiveFile{archivePath};
 
     if (!archiveFile.open(QIODevice::ReadOnly))
@@ -304,6 +316,70 @@ bool Archiver::writeDuplicateFiles(QFile &archiveFile,
 
             metadataList.append(meta);
         }
+    }
+
+    return true;
+}
+
+bool Archiver::validateArchivePathForPack(const QString &path)
+{
+    QFileInfo info{path};
+
+    if (info.exists() && info.isDir())
+    {
+        qCritical() << "Invalid archive file path provided - path points to a directory:" << path;
+        return false;
+    }
+
+    if (QDir dir{info.dir()};
+        !dir.exists() && !dir.mkpath("."))
+    {
+        qCritical() << "Failed to create directory for archive file path:" << dir.absolutePath();
+        return false;
+    }
+
+    if (info.fileName().isEmpty())
+    {
+        qCritical() << "Invalid archive file path provided - missing file name:" << path;
+        return false;
+    }
+
+    return true;
+}
+
+bool Archiver::validateArchivePathForUnpack(const QString &path)
+{
+    QFileInfo info{path};
+
+    if (!info.exists())
+    {
+        qCritical() << "Archive file does not exist:" << path;
+        return false;
+    }
+    if (!info.isFile())
+    {
+        qCritical() << "Archive path is not a file:" << path;
+        return false;
+    }
+
+    return true;
+}
+
+bool Archiver::validateOutputDirForUnpack(const QString &dirPath)
+{
+    QFileInfo info{dirPath};
+
+    if (info.exists() && !info.isDir())
+    {
+        qCritical() << "Provided output path exists but is not a directory:" << dirPath;
+        return false;
+    }
+
+    if (QDir dir{dirPath};
+        !dir.exists() && !dir.mkpath("."))
+    {
+        qCritical() << "Failed to create output directory:" << dir.absolutePath();
+        return false;
     }
 
     return true;
